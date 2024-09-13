@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 void main() => runApp(const MyApp());
 
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  
 
   @override
   Widget build(BuildContext context) {
@@ -32,21 +31,55 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<int> _sorteados = []; // Variável para armazenar os números sorteados
+  List<List<int>> _combinacoes = []; // Variável para armazenar as combinações
+  int _indiceCombinacaoAtual = 0;
 
+  // Função para simular os últimos 30 concursos e gerar combinações
   void _numeros() {
+    // Simulação dos últimos 30 concursos da Lotofácil
+    List<List<int>> ultimosConcursos = [
+      [1, 2, 3, 5, 7, 9, 10, 12, 15, 17, 18, 19, 21, 23, 25],
+      [2, 3, 4, 6, 8, 11, 12, 14, 16, 17, 18, 20, 22, 24, 25],
+      // ... (adicione os outros concursos aqui)
+      [1, 2, 6, 8, 9, 10, 11, 13, 14, 17, 18, 19, 21, 23, 25]
+    ];
+
+    // Inicializando o mapa para contar as frequências dos números
+    Map<int, int> frequencias = {};
+
+    // Contando a frequência dos números nos concursos simulados
+    for (var concurso in ultimosConcursos) {
+      for (var numero in concurso) {
+        frequencias[numero] = (frequencias[numero] ?? 0) + 1;
+      }
+    }
+
+    // Ordenando os números pelas frequências em ordem decrescente
+    List<int> numerosMaisFrequentes = frequencias.keys.toList()
+      ..sort((a, b) => frequencias[b]!.compareTo(frequencias[a]!));
+
+    // Selecionando os 15 números mais frequentes
+    List<int> top15 = numerosMaisFrequentes.sublist(0, 15);
+
+    // Gerando várias combinações aleatórias a partir dos 15 mais frequentes
+    Random random = Random();
+    _combinacoes = List.generate(5, (index) {
+      return top15..shuffle(random);
+    });
+
+    // Reiniciar o índice da combinação
+    _indiceCombinacaoAtual = 0;
+  }
+
+  // Função para avançar para a próxima combinação ou gerar combinações se ainda não existirem
+  void _proximaCombinacao() {
     setState(() {
-      // Criando uma lista com os números de 1 a 25
-      List<int> numeros = List.generate(25, (index) => index + 1);
-
-      // Embaralhando os números
-      numeros.shuffle();
-
-      // Selecionando os 15 primeiros números
-      _sorteados = numeros.sublist(0, 15);
-
-      // Ordenando os números sorteados (opcional)
-      _sorteados.sort();
+      if (_combinacoes.isEmpty) {
+        _numeros(); // Gera as combinações apenas na primeira vez
+      } else {
+        _indiceCombinacaoAtual =
+            (_indiceCombinacaoAtual + 1) % _combinacoes.length;
+      }
     });
   }
 
@@ -77,7 +110,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   style: TextStyle(
                     fontSize: 25,
                     fontWeight: FontWeight.bold,
-                    
                     color: Color.fromARGB(255, 33, 162, 37),
                   ),
                 ),
@@ -85,7 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 const SizedBox(height: 20), // Espaço entre o texto e a imagem
                 Image.asset(
                   'assets/trevo.jpg',
-                  width: 100,  // Definindo a largura da imagem
+                  width: 100, // Definindo a largura da imagem
                   height: 100, // Definindo a altura da imagem
                 ),
                 const SizedBox(height: 100), // Espaço entre a imagem e o texto
@@ -98,9 +130,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
                 Text(
-                  _sorteados.isNotEmpty
-                      ? _sorteados.join(', ') // Exibe os números sorteados
-                      : 'Nenhum número sorteado ainda',
+                  _combinacoes.isNotEmpty
+                      ? _combinacoes[_indiceCombinacaoAtual]
+                          .join(', ') // Exibe a combinação atual
+                      : 'Nenhum número sorteado ainda', // Exibe mensagem se não houver combinação
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
@@ -117,8 +150,8 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _numeros,
-        tooltip: 'Sortear',
+        onPressed: _proximaCombinacao,
+        tooltip: 'Próxima combinação',
         child: const Icon(Icons.app_registration_rounded),
       ),
     );
